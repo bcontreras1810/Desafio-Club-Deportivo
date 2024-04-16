@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Club Deportivo</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous" />
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>Deportes</h1>
+    <form action="/agregar" class="border rounded p-4">
+      <div class="form-group row">
+        <label class="col-sm-2 col-form-label">Nombre</label>
+
+        <div class="col-sm-10">
+          <input id="nombre" type="text" class="form-control" name="nombre" />
+        </div>
+      </div>
+      <div class="form-group row">
+        <label class="col-sm-2 col-form-label">Precio</label>
+
+        <div class="col-sm-10">
+          <input id="precio" type="text" class="form-control" name="precio" />
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-info" onclick="agregar()">Agregar</button>
+    </form>
+  </div>
+
+  <h5 class="text-center my-4">Tabla de deportes registrados</h5>
+  <table class="table w-25 m-auto border">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Nombre</th>
+        <th scope="col">Precio</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody id="cuerpo"></tbody>
+  </table>
+
+  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="rounded p-4">
+          <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Nombre</label>
+
+            <div class="col-sm-10">
+              <input id="nombreModal" disabled type="text" class="form-control" name="nombre" />
+            </div>
+          </div>
+          <div class="form-group row">
+            <label class="col-sm-2 col-form-label">Precio</label>
+
+            <div class="col-sm-10">
+              <input id="precioModal" type="text" class="form-control" name="precio" />
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-warning" onclick="edit()">Editar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Esta función se ejecuta cuando el documento HTML ha sido completamente cargado
+    $(document).ready(function () {
+      // Llama a la función getData() cuando el documento está listo
+      getData()
+    });
+    // Esta función obtiene los datos de deportes del servidor y los muestra en la tabla
+    function getData() {
+      // Limpia el contenido del cuerpo de la tabla antes de mostrar nuevos datos
+      $('#cuerpo').html('')
+       // Realiza una solicitud GET al servidor para obtener los datos de deportes
+      axios.get('/deportes').then((data) => {
+        // Extrae los datos de deportes de la respuesta del servidor
+        let deportes = data.data.deportes;
+        // Itera sobre cada deporte y lo agrega como una fila en la tabla
+        deportes.forEach((d, i) => {
+          $('#cuerpo').append(`
+        <tr>
+          <th scope="row">${i + 1}</th>
+          <td>${d.nombre}</td>
+          <td>${d.precio}</td>
+          <td>
+            <button class="btn btn-warning" onclick='preEdit("${d.nombre}","${d.precio
+            }")' data-toggle="modal" data-target="#exampleModal">Editar</button>
+            <button class="btn btn-danger" onclick='eliminar("${d.nombre}")'>Eliminar</button>
+          </td>
+        </tr>
+        `)
+        })
+      })
+    }
+    // Esta función establece los valores de nombre y precio en el modal de edición
+    function preEdit(nombre, precio) {
+      // Obtiene los valores de nombre y precio desde los campos de entrada
+      $('#nombreModal').val(nombre)
+      $('#precioModal').val(precio)
+    }
+    // Esta función agrega un nuevo deporte al servidor
+    function agregar() {
+      // Obtiene los valores de nombre y precio desde los campos de entrada
+      const nombre = $('#nombre').val()
+      const precio = $('#precio').val()
+      // Realiza una solicitud POST al servidor para agregar el nuevo deporte
+      axios.post(`/agregar`, { nombre, precio }).then((data) => {
+        // Muestra una alerta con la respuesta del servidor
+        alert(data.data)
+        // Actualiza los datos de la tabla
+        getData()
+      });
+       // Oculta el modal después de agregar el deporte
+      $('#exampleModal').modal('hide')
+    }
+      // Esta función edita el precio de un deporte existente en el servidor
+    function edit() {
+      // Obtiene los valores de nombre y precio desde los campos de entrada en el modal
+      const nombre = $('#nombreModal').val();
+      const precio = $('#precioModal').val();
+       // Realiza una solicitud PUT al servidor para editar el precio del deporte
+      axios.put(`/editar/${nombre}`, { precio }).then((data) => {
+        // Muestra una alerta con la respuesta del servidor
+        alert(data.data);
+        // Actualiza los datos de la tabla
+        getData();
+      });
+      // Oculta el modal después de editar el deporte
+      $('#exampleModal').modal('hide')
+    }
+    // Esta función elimina un deporte existente en el servidor
+    function eliminar(nombre) {
+      // Realiza una solicitud DELETE al servidor para eliminar el deporte
+      axios.delete(`/eliminar/${nombre}`).then((data) => {
+         // Muestra una alerta con la respuesta del servidor
+        alert(data.data);
+        // Actualiza los datos de la tabla
+        getData();
+      });
+      // Oculta el modal después de eliminar el deporte
+      $('#exampleModal').modal('hide')
+    }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.js"
+    integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+    integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+    integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
+    crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.20.0/axios.min.js"></script>
+</body>
+
+</html>
